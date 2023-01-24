@@ -118,11 +118,7 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
 
       db.BlocksNames.add(_TaskNameController.text);
 
-      var boxForToDo =
-          await Hive.openBox(textFromController.toLowerCase()); // Open the box
 
-      final _myBoxForToDo = await Hive.box(textFromController.toLowerCase());
-      ToDoDatabase db_to_do = ToDoDatabase(textFromController.toLowerCase());
 
 
 
@@ -131,7 +127,8 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
       Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => ToDoListPage(BoxName: textFromController)));
 
-      db.BlocksFirstTasks?.add(db_to_do.ToDoList);
+
+      db.BlocksFirstTasks?.add([]);
       db.updateDb();
       setState(() {
         _TaskNameController.clear();

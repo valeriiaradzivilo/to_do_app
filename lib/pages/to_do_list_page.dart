@@ -9,11 +9,8 @@ import 'dart:math';
 
 class ToDoListPage extends StatefulWidget {
   final String BoxName;
-  final boxForToDo; // Open the box
 
-  final myBoxForToDo;
-  final ToDoDatabase db_to_do;
-  const ToDoListPage({super.key, required this.BoxName, required this.boxForToDo, required this.myBoxForToDo, required this.db_to_do});
+  const ToDoListPage({super.key, required this.BoxName});
   @override
   State<ToDoListPage> createState() => _ToDoListPageState();
 }
@@ -66,12 +63,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   @override
   void initState() {
-    //
-    // if (percentDone == 1) {
-    //   _centerController.play();
-    // } else {
-    //   _centerController.stop();
-    // }
+
     super.initState();
   }
 
