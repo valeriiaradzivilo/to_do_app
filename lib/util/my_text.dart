@@ -9,11 +9,13 @@ class MainText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(12.0),
-      child: Text(text,
-      style: TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 5.w),
-      ),
+        child: Text(text,
+          overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 5.w),
+          textAlign: TextAlign.center,
+        ),
     );
   }
 }

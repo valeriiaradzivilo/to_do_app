@@ -70,6 +70,8 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
   final _myBox = Hive.box("ToDoAppBox");
 
   final _TaskNameController = TextEditingController();
+  String errorMessageSave = "";
+  final _formKey = GlobalKey<FormState>();
 
 
   @override
@@ -87,10 +89,18 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
     showDialog(
       context: context,
       builder: (context) {
-        return DialogueBox(
-          controller: _TaskNameController,
-          onSave: saveNewToDo,
-          onCancel: () => Navigator.of(context).pop(),
+        return Column(
+          children: [
+            Form(
+              key: _formKey,
+              child: DialogueBox(
+                controller: _TaskNameController,
+                onSave: saveNewToDo,
+                onCancel: () => Navigator.of(context).pop(),
+                names: db.BlocksNames,
+              ),
+            ),
+          ],
         );
       },
     );
@@ -98,34 +108,35 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
 
 
 
+
+
+
   void saveNewToDo  ()async
   {
-    String textFromController = _TaskNameController.text;
-    db.BlocksNames.add(_TaskNameController.text);
+    if(_formKey.currentState?.validate()==true) {
+      String textFromController = _TaskNameController.text;
+
+      db.BlocksNames.add(_TaskNameController.text);
+
+      var boxForToDo =
+          await Hive.openBox(textFromController.toLowerCase()); // Open the box
+
+      final _myBoxForToDo = await Hive.box(textFromController.toLowerCase());
+      ToDoDatabase db_to_do = ToDoDatabase(textFromController.toLowerCase());
 
 
-    var boxForToDo = await Hive.openBox(textFromController.toLowerCase()); // Open the box
 
-    final _myBoxForToDo = await Hive.box(textFromController.toLowerCase());
-    ToDoDatabase db_to_do = ToDoDatabase(textFromController.toLowerCase());
+      print("Created box named " + textFromController);
+      Navigator.of(context).pop();
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ToDoListPage(BoxName: textFromController)));
 
-
-    List first_tasks = [];
-
-        first_tasks.add("Nothing yet");
-        db.BlocksFirstTasks?.add(first_tasks);
-
-    print("Created box named "+textFromController);
-    Navigator.of(context).pop();
-    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ToDoListPage(BoxName: textFromController)));
-
-
-     db.updateDb();
-    setState(() {
-      _TaskNameController.clear();
-
-    });
-
+      db.BlocksFirstTasks?.add(db_to_do.ToDoList);
+      db.updateDb();
+      setState(() {
+        _TaskNameController.clear();
+      });
+    }
   }
 
   @override

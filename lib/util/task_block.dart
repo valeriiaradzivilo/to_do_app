@@ -19,10 +19,13 @@ class TaskBlockMain extends StatelessWidget {
             borderRadius: BorderRadius.circular(12), color: Colors.teal),
         child: Column(
           children: [
-            Text(
-              name,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              textAlign: TextAlign.center,
+            Flexible(
+              child: Text(
+                name,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                textAlign: TextAlign.center,
+              ),
             ),
           const Divider(
               color: Colors.blueGrey,

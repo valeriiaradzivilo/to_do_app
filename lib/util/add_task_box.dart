@@ -6,10 +6,26 @@ class DialogueBox extends StatelessWidget {
   final controller;
   VoidCallback onSave;
   VoidCallback onCancel;
+  final List names;
 
   DialogueBox({Key? key, required this.controller,
   required this.onSave,
-  required this.onCancel}) : super(key: key);
+  required this.onCancel, required this.names}) : super(key: key);
+  String? validateNotEmpty(String ?value) {
+    if (value==null || value.isEmpty) {
+      return 'Field cannot be empty';
+    }
+    if(value.toString().contains('\n'))
+      {
+        return 'Field must not include new line character';
+      }
+    if(names.contains(value.toString()))
+      {
+        return 'You already have such note, please,\nchange the name or open (delete)\nthe old one.';
+      }
+    return null;
+  }
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -19,26 +35,32 @@ class DialogueBox extends StatelessWidget {
         content: Container(
 
           height: 200,
+
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  border:  OutlineInputBorder(),
-                  hintText: "New task",
+
+              TextFormField(
+                  controller: controller,
+                  validator:validateNotEmpty,
+                  decoration: InputDecoration(
+                    border:  OutlineInputBorder(),
+                    hintText: "New task",
+                  ),
                 ),
-              ),
+
               Row(
                 children: [
-                  myButton(name: "Save", onPressed: onSave),
-                  const SizedBox(width: 10,),
                   myButton(name: "Cancel", onPressed: onCancel),
+                  const SizedBox(width: 10,),
+                  myButton(name: "Save", onPressed: onSave),
+
                 ],
               )
             ],
           ),
         ),
+
     );
   }
 }
