@@ -173,7 +173,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                         emissionFrequency: 0.01,
 
                         // 10 paticles will pop-up at a time
-                        numberOfParticles: 20,
+                        numberOfParticles: 50,
 
                         // particles will come down
                         gravity: 1,
