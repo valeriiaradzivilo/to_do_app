@@ -48,7 +48,9 @@ class ToDoAppPage extends StatefulWidget {
 
 class _ToDoAppPageState extends State<ToDoAppPage> {
 
-  List ToDoBlocks = [["Help", ["me","you"]],["Homework", ["Math","Science"]]];
+  List ToDoBlocks = [["Help", ["me","you"]],["Homework", ["Math","Science"]],
+  ["Zip's tasks",["Call mom", "Eat breakfast"]],
+    ["Lera's tasks",["Dima", "Eat Dima"]]];
 
   void createNewToDoListPage(){
 
@@ -70,24 +72,29 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
         child: Icon(Icons.add),
       ),
       body:
-            GridView.count(
-              primary: false,
-              padding: const EdgeInsets.all(20),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              crossAxisCount: 2,
-              // children: [
-              //   ListView.builder(
-              //     shrinkWrap: true,
-              //     itemCount: ToDoBlocks.length,
-              //     itemBuilder: (context, index) {
-              //       return TaskBlockMain(
-              //         name:ToDoBlocks.elementAt(index)[0],
-              //         tasks: ToDoBlocks.elementAt(index)[1],
-              //       );
-              //     },
-              //   ),
-              // ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 300,
+                      childAspectRatio: 3 / 2,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 20),
+                  itemCount: ToDoBlocks.length,
+                  itemBuilder: (BuildContext ctx, index) {
+                    return Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                          color: Colors.teal,
+                          borderRadius: BorderRadius.circular(15)),
+                      child: TaskBlockMain(
+                        name: ToDoBlocks.elementAt(index)[0],
+                        tasks: ToDoBlocks.elementAt(index)[1],
+                      ),
+                    );
+                  }
+
+              ),
             ),
 
 

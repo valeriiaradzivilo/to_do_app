@@ -13,9 +13,8 @@ class TaskBlockMain extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
-        padding: EdgeInsets.all(20),
-        height: 20.h,
-        width: 20.h,
+        padding: EdgeInsets.only(top:20,
+        left: 20, right: 20),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12), color: Colors.teal),
         child: Column(
@@ -25,16 +24,18 @@ class TaskBlockMain extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               textAlign: TextAlign.center,
             ),
-            Expanded(
-                child: Divider(
+          const Divider(
               color: Colors.blueGrey,
-            )),
-            ListView.builder(
-                shrinkWrap: true,
-                itemCount: 2,
-                itemBuilder: (context, index) {
-                  return Text(tasks.elementAt(index));
-                })
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: 2,
+                  itemBuilder: (context, index) {
+                    return Text(tasks.elementAt(index));
+                  }),
+            )
           ],
         ),
       ),
