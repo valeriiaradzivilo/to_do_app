@@ -7,10 +7,13 @@ class MainText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-    style: TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 5.w),
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Text(text,
+      style: TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 5.w),
+      ),
     );
   }
 }
