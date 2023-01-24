@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:to_do_app/data/database.dart';
+import 'package:to_do_app/data/database_blocks.dart';
+import 'package:to_do_app/pages/to_do_list_page.dart';
 import 'package:to_do_app/util/add_task_box.dart';
-import 'package:to_do_app/util/my_text.dart';
 import 'package:to_do_app/util/task_block.dart';
-import 'package:to_do_app/util/todo_tile.dart';
 import 'package:sizer/sizer.dart';
-import 'package:confetti/confetti.dart';
-import 'dart:math';
+
+
 
 void main() async {
   // init the hive
   await Hive.initFlutter();
-  var box = await Hive.openBox('mybox');
+  var box = await Hive.openBox('ToDoAppBox');
 
   runApp(const MyToDoApp());
 }
@@ -47,12 +46,53 @@ class ToDoAppPage extends StatefulWidget {
 }
 
 class _ToDoAppPageState extends State<ToDoAppPage> {
+  ToDoBlocksDatabase db = ToDoBlocksDatabase();
+  final _myBox = Hive.box("ToDoAppBox");
 
-  List ToDoBlocks = [["Help", ["me","you"]],["Homework", ["Math","Science"]],
-  ["Zip's tasks",["Call mom", "Eat breakfast"]],
-    ["Lera's tasks",["Dima", "Eat Dima"]]];
+  final _TaskNameController = TextEditingController();
+
+
+  @override
+  void initState() {
+    if (_myBox.get("BLOCKNAMES") == null) {
+      db.createInitialData();
+    } else {
+      db.loadData();
+    }
+    // TODO: implement initState
+    super.initState();
+  }
 
   void createNewToDoListPage(){
+    showDialog(
+      context: context,
+      builder: (context) {
+        return DialogueBox(
+          controller: _TaskNameController,
+          onSave: saveNewToDo,
+          onCancel: () => Navigator.of(context).pop(),
+        );
+      },
+    );
+  }
+
+  void saveNewToDo  ()async
+  {
+    db.BlocksNames.add(_TaskNameController.text);
+    db.BlocksFirstTasks?.add(["Nothing yet"]);
+    // await Hive.openBox(_TaskNameController.text);
+    String textFromController = _TaskNameController.text;
+
+    print("Created box named "+textFromController);
+    Navigator.of(context).pop();
+    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ToDoListPage(BoxName: textFromController)));
+
+
+     db.updateDb();
+    setState(() {
+      _TaskNameController.clear();
+
+    });
 
   }
 
@@ -77,10 +117,10 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
               child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 300,
-                      childAspectRatio: 3 / 2,
+                      childAspectRatio: 3 / 3,
                       crossAxisSpacing: 20,
                       mainAxisSpacing: 20),
-                  itemCount: ToDoBlocks.length,
+                  itemCount: db.BlocksNames.length,
                   itemBuilder: (BuildContext ctx, index) {
                     return Container(
                       alignment: Alignment.center,
@@ -88,8 +128,8 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
                           color: Colors.teal,
                           borderRadius: BorderRadius.circular(15)),
                       child: TaskBlockMain(
-                        name: ToDoBlocks.elementAt(index)[0],
-                        tasks: ToDoBlocks.elementAt(index)[1],
+                        name: db.BlocksNames.elementAt(index),
+                        tasks: db.BlocksFirstTasks?.elementAt(index),
                       ),
                     );
                   }

@@ -1,43 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:to_do_app/data/database.dart';
+import 'package:to_do_app/data/database_tasks.dart';
 import 'package:to_do_app/util/add_task_box.dart';
 import 'package:to_do_app/util/my_text.dart';
 import 'package:to_do_app/util/todo_tile.dart';
-import 'package:sizer/sizer.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 
+
 class ToDoListPage extends StatefulWidget {
-  const ToDoListPage({super.key});
+  final String BoxName;
+  const ToDoListPage({super.key, required this.BoxName});
   @override
   State<ToDoListPage> createState() => _ToDoListPageState();
 }
 
 class _ToDoListPageState extends State<ToDoListPage> {
-  late ConfettiController _centerController;
+
+  List ToDo = [];
+  List Done = [];
+  late ToDoDatabase db;
+
+
+  // controller for fireworks
+  final ConfettiController _centerController=
+  ConfettiController(duration: const Duration(seconds: 1));
+  late double percentDone= 0;
+
   // reference hive box
-  final _myBox = Hive.box('mybox');
+  late final _myBox;
 
   // text controller for new tasks
   final _controller = TextEditingController();
 
-  ToDoDatabase db = ToDoDatabase();
-
-  late double percentDone= db.DoneList.length/(db.ToDoList.length+db.DoneList.length);
+  var box = null;
 
 
-  @override
-  void initState() {
-    if (_myBox.get("TODOLIST") == null) {
+
+
+  Future<String> openBoxMy() async{
+    print("Open Box");
+    if(box==null) {
+      Hive.initFlutter(); // Initialize Hive
+      box = await Hive.openBox(widget.BoxName); // Open the box
+
+      _myBox = await Hive.box(widget.BoxName);
+      db = ToDoDatabase(widget.BoxName);
+    }
+
+    if (_myBox.get("TODOLIST")== null) {
       db.createInitialData();
     } else {
       db.loadData();
     }
-    _centerController =
-        ConfettiController(duration: const Duration(seconds: 1));
-    percentDone = db.DoneList.length/(db.ToDoList.length+db.DoneList.length);
+
+
+      ToDo = db.ToDoList;
+      Done = db.DoneList;
+      percentDone = db.DoneList.length/(db.ToDoList.length+db.DoneList.length);
+      return 'Opened box';
+
+
+  }
+
+
+
+  @override
+  void initState(){
     super.initState();
+
+
   }
 
   void CheckboxChanged(bool? value, int index, bool isToDo) {
@@ -62,9 +94,9 @@ class _ToDoListPageState extends State<ToDoListPage> {
     });
     db.updateDb();
   }
+
   @override
   void dispose() {
-
     // dispose the controller
     _centerController.dispose();
     super.dispose();
@@ -106,12 +138,13 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Colors.tealAccent,
       appBar: AppBar(
         centerTitle: true,
-        title: const Text(
-          "Tasks for today",
+        title: Text(
+          widget.BoxName,
         ),
         elevation: 0,
       ),
@@ -120,84 +153,129 @@ class _ToDoListPageState extends State<ToDoListPage> {
         child: Icon(Icons.add),
       ),
       body:
-      Column(
-        children: [
-          Align(
-            alignment:
+      FutureBuilder<String>(
+        future: openBoxMy(),
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          List<Widget> children;
 
-            // confetti will pop from top-center
-            Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _centerController,
-              blastDirection: pi / 2,
-              maxBlastForce: 5,
-              minBlastForce: 1,
-              emissionFrequency: 0.01,
+    if (snapshot.hasData) {
+                children = <Widget> [
+                    Align(
+                      alignment:
 
-              // 10 paticles will pop-up at a time
-              numberOfParticles: 20,
+                          // confetti will pop from top-center
+                          Alignment.topCenter,
+                      child: ConfettiWidget(
+                        confettiController: _centerController,
+                        blastDirection: pi / 2,
+                        maxBlastForce: 5,
+                        minBlastForce: 1,
+                        emissionFrequency: 0.01,
 
-              // particles will come down
-              gravity: 1,
+                        // 10 paticles will pop-up at a time
+                        numberOfParticles: 20,
 
-              // start again as soon as the
-              // animation is finished
-              shouldLoop:false,
+                        // particles will come down
+                        gravity: 1,
 
-              // assign colors of any choice
-              colors: const [
-                Colors.green,
-                Colors.tealAccent,
-                Colors.greenAccent,
-                Colors.lightGreenAccent,
-                Colors.teal
-              ],
-            ),
+                        // start again as soon as the
+                        // animation is finished
+                        shouldLoop: false,
+
+                        // assign colors of any choice
+                        colors: const [
+                          Colors.green,
+                          Colors.tealAccent,
+                          Colors.greenAccent,
+                          Colors.lightGreenAccent,
+                          Colors.teal
+                        ],
+                      ),
+                    ),
+                    MainText(text: "To do:"),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: ToDo.length,
+                        itemBuilder: (context, index) {
+                          return ToDoTile(
+                            taskName: ToDo.elementAt(index)[0],
+                            taskComplete: ToDo.elementAt(index)[1],
+                            onChanged: (value) =>
+                                CheckboxChanged(value, index, true),
+                            deleteTask: (context) => deleteTask(index, true),
+                            paddingSize: 25,
+                          );
+                        },
+                      ),
+                    ),
+
+                    const Divider(
+                      color: Colors.teal,
+                    ),
+                    MainText(text: "Done tasks:"),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: Done.length,
+                        itemBuilder: (context, index) {
+                          return ToDoTile(
+                            taskName: Done.elementAt(index)[0],
+                            taskComplete: Done.elementAt(index)[1],
+                            onChanged: (value) =>
+                                CheckboxChanged(value, index, false),
+                            deleteTask: (context) => deleteTask(index, false),
+                            paddingSize: 10,
+                          );
+                        },
+                      ),
+                    ),
+
+                    MainText(
+                        text: percentDone == 1
+                            ? "You've done great job today!"
+                            : ""),
+                    MainText(
+                        text: percentDone.isNaN
+                            ? "You haven't planned anything yet."
+                            : "You made: ${percentDone! * 100}% of work you planned."),
+                    // align the confetti on the screen
+                  ];
+              }
+    else if (snapshot.hasError) {
+      children = <Widget>[
+        const Icon(
+          Icons.error_outline,
+          color: Colors.red,
+          size: 60,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text('Error: ${snapshot.error}'),
+        ),
+      ];
+    }
+    else{
+      children = const <Widget>[
+        SizedBox(
+          width: 60,
+          height: 60,
+          child: CircularProgressIndicator(),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: 16),
+          child: Text('Awaiting result...'),
+        ),
+      ];
+    }
+          return Center(
+          child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: children,
           ),
-          MainText(text:"To do:"),
-          Expanded(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: db.ToDoList.length,
-              itemBuilder: (context, index) {
-                return ToDoTile(
-                  taskName: db.ToDoList.elementAt(index)[0],
-                  taskComplete: db.ToDoList.elementAt(index)[1],
-                  onChanged: (value) => CheckboxChanged(value, index,true),
-                  deleteTask: (context) => deleteTask(index,true),
-                  paddingSize: 25,
-                );
-              },
-            ),
-          ),
+          );
+            }
 
-
-          const Divider(color: Colors.teal,),
-          MainText(text:"Done tasks:"),
-          Expanded(
-            child: ListView.builder(
-              itemCount: db.DoneList.length,
-              itemBuilder: (context, index) {
-                return ToDoTile(
-                  taskName: db.DoneList.elementAt(index)[0],
-                  taskComplete: db.DoneList.elementAt(index)[1],
-                  onChanged: (value) => CheckboxChanged(value, index, false),
-                  deleteTask: (context) => deleteTask(index,false),
-                  paddingSize: 10,
-                );
-              },
-            ),
-          ),
-
-          MainText(text:percentDone==1?"You've done great job today!":""),
-          MainText(text:percentDone.isNaN?"You haven't planned anything yet.":"You made: ${percentDone!*100}% of work you planned."),
-          // align the confetti on the screen
-
-
-
-        ],
-      ),
-
+      )
     );
 
   }

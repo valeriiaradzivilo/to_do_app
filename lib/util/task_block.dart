@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class TaskBlockMain extends StatelessWidget {
-  final name;
-  final List tasks;
-  const TaskBlockMain({Key? key, this.name, required this.tasks})
+  final String name;
+  final List? tasks;
+  const TaskBlockMain({Key? key, required this.name, required this.tasks})
       : super(key: key);
 
   @override
@@ -29,12 +29,12 @@ class TaskBlockMain extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: ListView.builder(
+              child: tasks!=null? ListView.builder(
                   shrinkWrap: true,
-                  itemCount: 2,
+                  itemCount: tasks?.length,
                   itemBuilder: (context, index) {
-                    return Text(tasks.elementAt(index));
-                  }),
+                    return tasks?.elementAt(index)!=null?Text(tasks?.elementAt(index)):Text("Nothing yet");
+                  }):null,
             )
           ],
         ),
