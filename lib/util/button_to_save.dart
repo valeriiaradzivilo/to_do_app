@@ -1,10 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class myButton extends StatelessWidget {
+class MyButton extends StatelessWidget {
   final String name;
   VoidCallback onPressed;
-  myButton({super.key, required this.name,
+  MyButton({super.key, required this.name,
   required this.onPressed});
 
   @override

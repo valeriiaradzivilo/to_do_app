@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:to_do_app/data/database_tasks.dart';
-import 'package:to_do_app/util/add_task_box.dart';
+import 'package:to_do_app/util/dialogue_new_box.dart';
 import 'package:to_do_app/util/my_text.dart';
 import 'package:to_do_app/util/todo_tile.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 
-class ToDoListPage extends StatefulWidget {
-  final String BoxName;
 
-  const ToDoListPage({super.key, required this.BoxName});
+class ToDoListPage extends StatefulWidget {
+  final int indexBox;
+  final String boxName;
+  final List? blocksFirstTasks;
+
+  const ToDoListPage({super.key, required this.boxName, required this.blocksFirstTasks, required this.indexBox});
   @override
   State<ToDoListPage> createState() => _ToDoListPageState();
 }
 
 class _ToDoListPageState extends State<ToDoListPage> {
-  List ToDo = [];
-  List Done = [];
+  List toDo = [];
+  List done = [];
   late ToDoDatabase db;
 
   // controller for fireworks
@@ -34,13 +37,11 @@ class _ToDoListPageState extends State<ToDoListPage> {
   var box = null;
 
   Future<String> openBoxMy() async {
-    print("Open Box");
     if (box == null) {
       Hive.initFlutter(); // Initialize Hive
-      box = await Hive.openBox(widget.BoxName); // Open the box
-
-      _myBox = await Hive.box(widget.BoxName);
-      db = ToDoDatabase(widget.BoxName);
+      box = await Hive.openBox(widget.boxName); // Open the box
+      _myBox = await Hive.box(widget.boxName);
+      db = ToDoDatabase(widget.boxName);
     }
 
     if (_myBox.get("TODOLIST") == null) {
@@ -49,10 +50,10 @@ class _ToDoListPageState extends State<ToDoListPage> {
       db.loadData();
     }
 
-    ToDo = db.ToDoList;
-    Done = db.DoneList;
+    toDo = db.toDoList;
+    done = db.doneList;
     percentDone =
-        db.DoneList.length / (db.ToDoList.length + db.DoneList.length);
+        db.doneList.length / (db.toDoList.length + db.doneList.length);
     if (percentDone ==   1) {
       _centerController.play();
     } else {
@@ -67,16 +68,16 @@ class _ToDoListPageState extends State<ToDoListPage> {
     super.initState();
   }
 
-  void CheckboxChanged(bool? value, int index, bool isToDo) {
+  void checkboxChanged(bool? value, int index, bool isToDo) {
     setState(() {
       if (isToDo) {
-        db.ToDoList.elementAt(index)[1] = !db.ToDoList.elementAt(index)[1];
-        db.DoneList.add(db.ToDoList.elementAt(index));
-        db.ToDoList.removeAt(index);
+        db.toDoList.elementAt(index)[1] = !db.toDoList.elementAt(index)[1];
+        db.doneList.add(db.toDoList.elementAt(index));
+        db.toDoList.removeAt(index);
       } else {
-        db.DoneList.elementAt(index)[1] = !db.DoneList.elementAt(index)[1];
-        db.ToDoList.add(db.DoneList.elementAt(index));
-        db.DoneList.removeAt(index);
+        db.doneList.elementAt(index)[1] = !db.doneList.elementAt(index)[1];
+        db.toDoList.add(db.doneList.elementAt(index));
+        db.doneList.removeAt(index);
       }
       if (percentDone ==  1) {
         _centerController.play();
@@ -85,6 +86,20 @@ class _ToDoListPageState extends State<ToDoListPage> {
       }
     });
     db.updateDb();
+    widget.blocksFirstTasks?.removeAt(widget.indexBox);
+    if(db.toDoList.length>1) {
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, [db.toDoList.elementAt(0)[0],db.toDoList.elementAt(1)[0],"..."]);
+    }
+    else if(db.toDoList.isNotEmpty)
+    {
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, [db.toDoList.elementAt(0)[0]]);
+    }
+    else{
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, ["Nothing to do"]);
+    }
   }
 
   @override
@@ -96,22 +111,52 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   void saveNewTask() {
     setState(() {
-      db.ToDoList.add([_controller.text, false]);
+      db.toDoList.add([_controller.text, false]);
       Navigator.of(context).pop();
       _controller.clear();
     });
     db.updateDb();
+
+    widget.blocksFirstTasks?.removeAt(widget.indexBox);
+    if(db.toDoList.length>1) {
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, [db.toDoList.elementAt(0)[0],db.toDoList.elementAt(1)[0],"..."]);
+    }
+    else if(db.toDoList.isNotEmpty)
+      {
+        widget.blocksFirstTasks?.insert(
+            widget.indexBox, [db.toDoList.elementAt(0)[0]]);
+      }
+    else{
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, ["Nothing to do"]);
+    }
   }
 
   void deleteTask(int index, bool isToDo) {
     setState(() {
       if (isToDo) {
-        db.ToDoList.removeAt(index);
+        db.toDoList.removeAt(index);
       } else {
-        db.DoneList.removeAt(index);
+        db.doneList.removeAt(index);
       }
     });
     db.updateDb();
+
+    widget.blocksFirstTasks?.removeAt(widget.indexBox);
+    if(db.toDoList.length>1) {
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, [db.toDoList.elementAt(0)[0],db.toDoList.elementAt(1)[0],"..."]);
+    }
+    else if(db.toDoList.isNotEmpty)
+    {
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, [db.toDoList.elementAt(0)[0]]);
+    }
+    else{
+      widget.blocksFirstTasks?.insert(
+          widget.indexBox, ["Nothing to do"]);
+    }
   }
 
   void createNewTask() {
@@ -122,7 +167,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
           controller: _controller,
           onSave: saveNewTask,
           onCancel: () => Navigator.of(context).pop(),
-          names: [],
+          names: const [],
         );
       },
     );
@@ -136,7 +181,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
         appBar: null,
         floatingActionButton: FloatingActionButton(
           onPressed: createNewTask,
-          child: Icon(Icons.add),
+          child: const Icon(Icons.add),
         ),
         body: FutureBuilder<String>(
             future: openBoxMy(),
@@ -154,7 +199,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                       minBlastForce: 1,
                       emissionFrequency: 0.01,
 
-                      // paticles will pop-up at a time
+                      // particles will pop-up at a time
                       numberOfParticles: 30,
 
                       // particles will come down
@@ -178,7 +223,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                     child: CustomScrollView(slivers: <Widget>[
                       SliverAppBar(
                         stretch: true,
-                        expandedHeight: widget.BoxName.length.toDouble()*3,
+                        expandedHeight: widget.boxName.length.toDouble()*3,
                         flexibleSpace: FlexibleSpaceBar(
                           stretchModes: const <StretchMode>[
                             StretchMode.zoomBackground,
@@ -188,18 +233,13 @@ class _ToDoListPageState extends State<ToDoListPage> {
                           centerTitle: true,
                           title: Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text(widget.BoxName,
+                            child: Text(widget.boxName,
                               overflow: TextOverflow.visible,),
                           ),
 
                         ),
                       ),
-                      SliverToBoxAdapter(
-                        // align the confetti on the screen
-                         child: null,
-
-                      ),
-                      SliverToBoxAdapter(
+                      const SliverToBoxAdapter(
                         child: MainText(text: "To do:"),
                       ),
                       SliverPadding(
@@ -208,20 +248,20 @@ class _ToDoListPageState extends State<ToDoListPage> {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               return ToDoTile(
-                                taskName: ToDo.elementAt(index)[0],
-                                taskComplete: ToDo.elementAt(index)[1],
+                                taskName: toDo.elementAt(index)[0],
+                                taskComplete: toDo.elementAt(index)[1],
                                 onChanged: (value) =>
-                                    CheckboxChanged(value, index, true),
+                                    checkboxChanged(value, index, true),
                                 deleteTask: (context) =>
                                     deleteTask(index, true),
                                 paddingSize: 25,
                               );
                             },
-                            childCount: ToDo.length,
+                            childCount: toDo.length,
                           ),
                         ),
                       ),
-                      SliverToBoxAdapter(
+                      const SliverToBoxAdapter(
                         child: MainText(text: "Done:"),
                       ),
                       SliverPadding(
@@ -230,16 +270,16 @@ class _ToDoListPageState extends State<ToDoListPage> {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               return ToDoTile(
-                                taskName: Done.elementAt(index)[0],
-                                taskComplete: Done.elementAt(index)[1],
+                                taskName: done.elementAt(index)[0],
+                                taskComplete: done.elementAt(index)[1],
                                 onChanged: (value) =>
-                                    CheckboxChanged(value, index, false),
+                                    checkboxChanged(value, index, false),
                                 deleteTask: (context) =>
                                     deleteTask(index, false),
                                 paddingSize: 10,
                               );
                             },
-                            childCount: Done.length,
+                            childCount: done.length,
                           ),
                         ),
                       ),

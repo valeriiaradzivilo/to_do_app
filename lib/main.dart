@@ -1,13 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:to_do_app/data/database_blocks.dart';
 import 'package:to_do_app/pages/to_do_list_page.dart';
-import 'package:to_do_app/util/add_task_box.dart';
+import 'package:to_do_app/util/DialogueCheck.dart';
+import 'package:to_do_app/util/dialogue_new_box.dart';
 import 'package:to_do_app/util/task_block.dart';
 import 'package:sizer/sizer.dart';
 
-import 'data/database_tasks.dart';
 
 
 
@@ -15,7 +14,7 @@ import 'data/database_tasks.dart';
 void main() async {
   // init the hive
   await Hive.initFlutter();
-  var box = await Hive.openBox('ToDoAppBox');
+  await Hive.openBox('ToDoAppBox');
 
   runApp(const MyToDoApp());
 }
@@ -25,9 +24,10 @@ void main() async {
 class MyToDoApp extends StatelessWidget {
   const MyToDoApp({super.key});
 
-  // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
+    // sizer to make app adaptive
     return Sizer(
         builder: (context, orientation, deviceType)
     {
@@ -36,7 +36,7 @@ class MyToDoApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.teal,
         ),
-        home: ToDoAppPage(),
+        home: const ToDoAppPage(),
       );
     }
     );
@@ -59,32 +59,38 @@ class ToDoAppPage extends StatefulWidget {
 
 
 class _ToDoAppPageState extends State<ToDoAppPage> {
+  // this key is used for restart
   Key key = UniqueKey();
 
+  // restart page to submit changes
   void restartApp() {
     setState(() {
       key = UniqueKey();
     });
   }
+
+  // opening box in hive and assigning database
   ToDoBlocksDatabase db = ToDoBlocksDatabase();
   final _myBox = Hive.box("ToDoAppBox");
 
-  final _TaskNameController = TextEditingController();
-  String errorMessageSave = "";
+  // text controller for input of name of box
+  final _taskNameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
 
   @override
   void initState() {
+    // load db or create inital data
     if (_myBox.get("BLOCKNAMES") == null) {
       db.createInitialData();
     } else {
       db.loadData();
     }
-    // TODO: implement initState
     super.initState();
+    restartApp();
   }
 
+  // dialogue with input from user to get name of block
   void createNewToDoListPage(){
     showDialog(
       context: context,
@@ -94,10 +100,10 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
             Form(
               key: _formKey,
               child: DialogueBox(
-                controller: _TaskNameController,
+                controller: _taskNameController,
                 onSave: saveNewToDo,
                 onCancel: () => Navigator.of(context).pop(),
-                names: db.BlocksNames,
+                names: db.blocksNames,
               ),
             ),
           ],
@@ -108,53 +114,67 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
 
 
 
-
-
-
+  // on save for dialogue createNewToDoListPage()
   void saveNewToDo  ()async
   {
     if(_formKey.currentState?.validate()==true) {
-      String textFromController = _TaskNameController.text;
+      String textFromController = _taskNameController.text;
 
-      db.BlocksNames.add(_TaskNameController.text);
-
-
+      db.blocksNames.add(_taskNameController.text);
 
 
-
-      print("Created box named " + textFromController);
+      int indexBox = db.blocksNames.length-1;
+      db.blocksFirstTasks?.add(["Nothing yet"]);
       Navigator.of(context).pop();
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => ToDoListPage(BoxName: textFromController)));
+      await Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ToDoListPage(boxName: textFromController,
+          indexBox: indexBox, blocksFirstTasks: db.blocksFirstTasks,)));
 
 
-      db.BlocksFirstTasks?.add([]);
       db.updateDb();
       setState(() {
-        _TaskNameController.clear();
+        _taskNameController.clear();
       });
+      restartApp();
     }
   }
 
-  @override
+  // on long press block is deleted
   void deleteBlock(int index) async
   {
-    print("long press");
-    var box = await Hive.openBox(db.BlocksNames.elementAt(index).toLowerCase());
+    var box = await Hive.openBox(db.blocksNames.elementAt(index).toLowerCase());
     await box.clear();
-    db.BlocksNames.removeAt(index);
-    db.BlocksFirstTasks?.removeAt(index);
+    db.blocksNames.removeAt(index);
+    db.blocksFirstTasks?.removeAt(index);
     db.updateDb();
     restartApp();
-    
-
+    Navigator.of(context).pop();
 
   }
 
-  void openToDoList(String boxName){
-    print("tap");
-    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ToDoListPage(BoxName: boxName)));
-    
+
+  // open to do list with this name
+  void openToDoList(String boxName, int index) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ToDoListPage(boxName: boxName, blocksFirstTasks: db.blocksFirstTasks,indexBox: index,)));
+    restartApp();
+  }
+
+  void onLongPressOnBox(int index)
+  {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Column(
+          children: [
+              DialogueCheck(
+                controller: _taskNameController,
+                onYes: ()=>deleteBlock(index),
+                onNo: () => Navigator.of(context).pop(),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -172,7 +192,7 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: createNewToDoListPage,
-          child: Icon(Icons.add),
+          child: const Icon(Icons.add),
         ),
         body:
               Padding(
@@ -183,15 +203,15 @@ class _ToDoAppPageState extends State<ToDoAppPage> {
                         childAspectRatio: 3 / 3,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20),
-                    itemCount: db.BlocksNames.length,
+                    itemCount: db.blocksNames.length,
                     itemBuilder: (BuildContext ctx, index) {
                       return
                          GestureDetector(
-                          onTap: ()=>openToDoList(db.BlocksNames.elementAt(index)),
-                          onLongPress:()=>deleteBlock(index),
+                          onTap: ()=>openToDoList(db.blocksNames.elementAt(index), index),
+                          onLongPress:()=>onLongPressOnBox(index),
                             child: TaskBlockMain(
-                              name: db.BlocksNames.elementAt(index),
-                              tasks: db.BlocksFirstTasks?.elementAt(index),
+                              name: db.blocksNames.elementAt(index),
+                              tasks: db.blocksFirstTasks?.elementAt(index),
                             ),
 
 

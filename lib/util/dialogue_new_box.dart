@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:to_do_app/util/button_to_save.dart';
 
@@ -25,35 +24,29 @@ class DialogueBox extends StatelessWidget {
       }
     return null;
   }
-  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-
       backgroundColor: Colors.teal[300],
         content: Container(
-
           height: 200,
-
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-
               TextFormField(
                   controller: controller,
                   validator:validateNotEmpty,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border:  OutlineInputBorder(),
                     hintText: "New task",
                   ),
                 ),
-
               Row(
                 children: [
-                  myButton(name: "Cancel", onPressed: onCancel),
+                  MyButton(name: "Cancel", onPressed: onCancel),
                   const SizedBox(width: 10,),
-                  myButton(name: "Save", onPressed: onSave),
+                  MyButton(name: "Save", onPressed: onSave),
 
                 ],
               )
