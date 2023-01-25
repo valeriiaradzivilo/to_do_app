@@ -26,9 +26,8 @@ class ToDoDatabase{
 
   void createInitialData()
   {
-    toDoList = [["Make sandwich",false],
-    ["Swipe left <=", false]];
-    doneList = [["I woke up )", true]];
+    toDoList = [ ["Swipe left <=", false]];
+    doneList = [["This task is done", true]];
   }
 
   void loadData()
