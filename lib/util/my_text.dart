@@ -13,7 +13,7 @@ class MainText extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         style: TextStyle(
         fontWeight: FontWeight.bold,
-        fontSize: 5.w),
+        fontSize: 2.w+1.h),
           textAlign: TextAlign.center,
         ),
     );
